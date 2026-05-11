@@ -6,11 +6,14 @@ from insurance_contracts.services.paid_plans.repo import PaidPlansRepo
 from insurance_contracts.services.paid_plans.schemas import (
     PaidPlanCreate, PaidPlanUpdate, PaidPlanResponse
 )
+from utils.base_service import BaseService
 
 
-class PaidPlansService:
+class PaidPlansService(BaseService[PaidPlanResponse]):
+    response_schema = PaidPlanResponse
+
     def __init__(self, session: AsyncSession):
-        self.repo = PaidPlansRepo(session)
+        super().__init__(PaidPlansRepo(session))
 
     async def create_paid_plan(self, plan_in: PaidPlanCreate) -> PaidPlanResponse:
         new_id = await self.repo.create_paid_plan(
@@ -19,35 +22,23 @@ class PaidPlansService:
             payment_period=plan_in.payment_period,
             description=plan_in.description
         )
-
-        return PaidPlanResponse(id=new_id, **plan_in.model_dump())
+        return self.response_schema(id=new_id, **plan_in.model_dump())
 
     async def get_all_paid_plans(self) -> list[PaidPlanResponse]:
-        plans_data = await self.repo.get_all_paid_plans()
-
-        return [PaidPlanResponse(**plan) for plan in plans_data]
+        return self._map_list(await self.repo.get_all_paid_plans())
 
     async def get_paid_plan_by_id(self, plan_id: uuid.UUID) -> PaidPlanResponse:
-        plan_data = await self.repo.get_paid_plan_by_id(plan_id)
+        plan_data = await self._get_or_raise(
+            self.repo.get_paid_plan_by_id(plan_id),
+            detail=f"Тарифний план з ID {plan_id} не знайдено."
+        )
+        return self.response_schema(**plan_data)
 
-        if not plan_data:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Тарифний план з ID {plan_id} не знайдено."
-            )
-
-        return PaidPlanResponse(**plan_data)
-
-    async def update_paid_plan(
-            self, plan_id: uuid.UUID, plan_in: PaidPlanUpdate
-    ) -> PaidPlanResponse:
-        existing_plan = await self.repo.get_paid_plan_by_id(plan_id)
-        if not existing_plan:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Тарифний план з ID {plan_id} не знайдено. Оновлення неможливе."
-            )
-
+    async def update_paid_plan(self, plan_id: uuid.UUID, plan_in: PaidPlanUpdate) -> PaidPlanResponse:
+        await self._get_or_raise(
+            self.repo.get_paid_plan_by_id(plan_id),
+            detail=f"Тарифний план з ID {plan_id} не знайдено. Оновлення неможливе."
+        )
         await self.repo.update_paid_plan(
             plan_id=plan_id,
             name=plan_in.name,
@@ -55,15 +46,11 @@ class PaidPlansService:
             payment_period=plan_in.payment_period,
             description=plan_in.description
         )
-
-        return PaidPlanResponse(id=plan_id, **plan_in.model_dump())
+        return self.response_schema(id=plan_id, **plan_in.model_dump())
 
     async def delete_paid_plan(self, plan_id: uuid.UUID) -> None:
-        existing_plan = await self.repo.get_paid_plan_by_id(plan_id)
-        if not existing_plan:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Тарифний план з ID {plan_id} не знайдено. Видалення неможливе."
-            )
-
-        await self.repo.delete_paid_plan(plan_id)
+        await self._get_or_raise(
+            self.repo.get_paid_plan_by_id(plan_id),
+            detail=f"Тарифний план з ID {plan_id} не знайдено. Видалення неможливе."
+        )
+        await self.repo.delete_by_id(plan_id)

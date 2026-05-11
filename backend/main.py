@@ -4,7 +4,7 @@ from sqlalchemy import text
 from database import get_async_session, init_db
 from contextlib import asynccontextmanager
 
-from routers import paid_plans
+from routers import paid_plans, insurance_contracts, insurance_events
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,3 +29,5 @@ async def health_check(session: AsyncSession = Depends(get_async_session)):
         return {"status": "error", "message": str(e)}
 
 app.include_router(paid_plans.router)
+app.include_router(insurance_contracts.router)
+app.include_router(insurance_events.router)
