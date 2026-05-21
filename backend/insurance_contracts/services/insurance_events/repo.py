@@ -36,3 +36,8 @@ class InsuranceEventsRepo(BaseRepo):
 
     async def get_by_contract_id(self, contract_id: uuid.UUID) -> list[dict]:
         return await self.find_all(self._BASE_QUERY, {"IE.ID_InsuranceContract": str(contract_id)})
+
+    async def get_sum_all_open_events(self) -> int:
+        query = f"SELECT COUNT(*) FROM {self.table_name} WHERE IsInsuranceCase = 0"
+        result = await self.session.execute(query)
+        return result.scalar()

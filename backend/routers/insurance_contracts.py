@@ -117,3 +117,12 @@ async def delete_insurance_contract(
     service: InsuranceContractsService
 ):
     await service.delete_insurance_contract(contract_id)
+
+@router.get(
+    "/quantity/active",
+    summary="Отримати кількість активних контрактів"
+)
+async def get_active_contracts_quantity(
+    service: InsuranceContractsService
+):
+    return await service.get_quantity_of_active_insurance_contracts()

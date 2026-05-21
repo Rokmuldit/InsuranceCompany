@@ -27,55 +27,51 @@ class BaseRepo:
         await self.session.commit()
         return result.scalar()
 
-    # ---
+    # --- ГЕНЕРАТОРЫ SQL ЗАПРОСОВ (БЕЗ COMMIT) ---
 
-    async def create_record(self, **kwargs) -> Any:
-        if not self.table_name:
-            raise ValueError("table_name is not defined")
-
+    def _build_insert_query(self, table: str, kwargs: dict) -> tuple[str, dict]:
         columns = ", ".join(kwargs.keys())
         placeholders = ", ".join(f":{k}" for k in kwargs.keys())
+        query = f"INSERT INTO {table} ({columns}) OUTPUT INSERTED.ID VALUES ({placeholders})"
+        return query, kwargs
 
-        query = f"""
-            INSERT INTO {self.table_name} ({columns}) 
-            OUTPUT INSERTED.ID 
-            VALUES ({placeholders})
-        """
-        return await self._insert_and_return_id(query, kwargs)
+    def _build_update_query(self, table: str, record_id: Any, kwargs: dict) -> tuple[str, dict]:
+        set_clauses = ", ".join(f"{k} = :{k}" for k in kwargs.keys())
+        query = f"UPDATE {table} SET {set_clauses} WHERE ID = :_id"
+        params = {"_id": str(record_id), **kwargs}
+        return query, params
+
+    def _build_delete_query(self, table: str, record_id: Any) -> tuple[str, dict]:
+        query = f"DELETE FROM {table} WHERE ID = :_id"
+        return query, {"_id": str(record_id)}
+
+    # --- БАЗОВЫЙ CRUD С АВТОКОММИТАМИ ---
+
+    async def create_record(self, **kwargs) -> Any:
+        if not self.table_name: raise ValueError("table_name is not defined")
+        query, params = self._build_insert_query(self.table_name, kwargs)
+        return await self._insert_and_return_id(query, params)
 
     async def update_record(self, record_id: Any, **kwargs) -> None:
-        if not self.table_name:
-            raise ValueError("table_name is not defined")
-
-        set_clauses = ", ".join(f"{k} = :{k}" for k in kwargs.keys())
-        query = f"UPDATE {self.table_name} SET {set_clauses} WHERE ID = :id"
-
-        params = {"id": str(record_id), **kwargs}
+        if not self.table_name: raise ValueError("table_name is not defined")
+        query, params = self._build_update_query(self.table_name, record_id, kwargs)
         await self._execute_and_commit(query, params)
 
     async def delete_by_id(self, record_id: Any) -> None:
-        if not self.table_name:
-            raise ValueError("table_name is not defined")
+        if not self.table_name: raise ValueError("table_name is not defined")
+        query, params = self._build_delete_query(self.table_name, record_id)
+        await self._execute_and_commit(query, params)
 
-        query = f"DELETE FROM {self.table_name} WHERE ID = :id"
-        await self._execute_and_commit(query, {"id": str(record_id)})
-
-    # ---
+    # --- ГЕНЕРАЦИЯ SELECT/WHERE ---
 
     def _build_where(self, filters: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-        """
-        {"IC.ID": 123} -> (" WHERE IC.ID = :p_0", {"p_0": 123})
-        """
-        if not filters:
-            return "", {}
-
+        if not filters: return "", {}
         clauses = []
         params = {}
         for i, (column, value) in enumerate(filters.items()):
             param_name = f"p_{i}"
             clauses.append(f"{column} = :{param_name}")
             params[param_name] = value
-
         return " WHERE " + " AND ".join(clauses), params
 
     async def find_all(self, base_query: str, filters: dict[str, Any] | None = None) -> list[dict]:

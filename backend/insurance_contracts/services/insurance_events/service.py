@@ -64,3 +64,6 @@ class InsuranceEventsService(BaseService[InsuranceEventResponse]):
             detail=f"Страхову подію з ID {event_id} не знайдено."
         )
         await self.repo.delete_by_id(event_id)
+
+    async def get_sum_all_open_events(self) -> int:
+        return await self.repo.get_sum_all_open_events()

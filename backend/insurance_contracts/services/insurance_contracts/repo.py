@@ -99,3 +99,8 @@ class InsuranceContractsRepo(BaseRepo):
 
     async def activate_insurance_contract(self, contract_id: uuid.UUID) -> None:
         await self.update_record(record_id=contract_id, IsActive=1)
+
+    async def get_quantity_of_active_insurance_contracts(self) -> int:
+        query = "SELECT COUNT(*) AS quantity FROM InsuranceContract WHERE IsActive = 1"
+        result = await self.session.execute(text(query))
+        return int(result.scalar())

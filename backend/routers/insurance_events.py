@@ -73,3 +73,11 @@ async def delete_event(
     service: InsuranceEventsService
 ):
     await service.delete_event(event_id)
+
+@router.get(
+    "/sum/all_open_events"
+)
+async def get_sum_all_open_events(
+    service: InsuranceEventsService
+):
+    return await service.get_sum_all_open_events()

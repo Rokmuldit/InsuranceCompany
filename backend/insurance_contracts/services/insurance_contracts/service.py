@@ -76,3 +76,6 @@ class InsuranceContractsService(BaseService[InsuranceContractResponse]):
             detail=f"Договір з ID {contract_id} не знайдено."
         )
         await self.repo.delete_by_id(contract_id)
+
+    async def get_quantity_of_active_insurance_contracts(self) -> int:
+        return await self.repo.get_quantity_of_active_insurance_contracts()
