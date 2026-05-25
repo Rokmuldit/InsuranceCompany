@@ -51,7 +51,7 @@ class AgentRepo(BaseRepo):
                 clauses.append(f"{column} = :{param_name}")
                 params[param_name] = value
 
-        where_clause = " WHERE " + " AND ".join(clauses)
+        where_clause = " WHERE " + " OR ".join(clauses)
         query = self._BASE_QUERY + where_clause
 
         result = await self.session.execute(text(query), params)

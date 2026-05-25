@@ -7,7 +7,16 @@
       </AppButton>
     </div>
 
-    <AppTable :columns="columns" :items="plansStore.plans">
+    <AppTable
+      :columns="columns"
+      :items="plansStore.plans"
+      :total="plansStore.total"
+      :page="plansStore.page"
+      :pages="plansStore.pages"
+      :size="plansStore.size"
+      @update:page="plansStore.fetchPlans($event, plansStore.size)"
+      @update:size="plansStore.fetchPlans(1, $event)"
+    >
       <template #cell(payment_amount)="{ item }">
         ${{ item.payment_amount }}
       </template>

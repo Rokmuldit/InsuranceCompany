@@ -4,14 +4,29 @@
       <h3 class="text-lg font-medium text-gray-900">Insurance Events</h3>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Select Contract to view/report events</label>
-      <select v-model="selectedContractId" @change="loadEvents" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        <option value="">Select a contract</option>
-        <option v-for="c in contractsStore.contracts" :key="c.id" :value="c.id">
-          Contract #{{ c.id.slice(0, 8) }} - {{ c.client?.personal_data?.last_name }}
-        </option>
-      </select>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Search Contract by Full ID</label>
+        <div class="flex space-x-2">
+          <input 
+            v-model="searchId" 
+            type="text" 
+            placeholder="Paste full Contract ID (UUID)..." 
+            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border"
+          />
+          <AppButton @click="searchByContractId" :loading="searching" variant="secondary">Search</AppButton>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Or select from list</label>
+        <select v-model="selectedContractId" @change="loadEvents" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+          <option value="">Select a contract</option>
+          <option v-for="c in contractsStore.contracts" :key="c.contract_id" :value="c.contract_id">
+            Contract #{{ c.contract_id.slice(0, 8) }}... - {{ c.client_last_name }}
+          </option>
+        </select>
+      </div>
     </div>
 
     <div v-if="selectedContractId" class="space-y-4">
@@ -20,7 +35,16 @@
         <AppButton @click="isModalOpen = true">Report Event</AppButton>
       </div>
 
-      <AppTable :columns="columns" :items="events">
+      <AppTable
+        :columns="columns"
+        :items="eventsStore.events"
+        :total="eventsStore.total"
+        :page="eventsStore.page"
+        :pages="eventsStore.pages"
+        :size="eventsStore.size"
+        @update:page="eventsStore.fetchEventsByContract(selectedContractId, $event, eventsStore.size)"
+        @update:size="eventsStore.fetchEventsByContract(selectedContractId, 1, $event)"
+      >
         <template #cell(is_insurance_case)="{ item }">
           <span
             class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
@@ -70,7 +94,27 @@ const eventsStore = useEventsStore();
 const contractsStore = useContractsStore();
 
 const selectedContractId = ref('');
-const events = ref<InsuranceEvent[]>([]);
+const searchId = ref('');
+const searching = ref(false);
+
+async function searchByContractId() {
+  if (!searchId.value) return;
+  searching.value = true;
+  try {
+    const contract = await contractsStore.fetchContractById(searchId.value);
+    if (contract) {
+      selectedContractId.value = contract.contract_id;
+      await loadEvents();
+    } else {
+      alert('Contract not found');
+    }
+  } catch (e) {
+    alert('Invalid ID or contract not found');
+  } finally {
+    searching.value = false;
+  }
+}
+
 const isModalOpen = ref(false);
 const saving = ref(false);
 
@@ -87,9 +131,7 @@ const form = reactive({
 
 async function loadEvents() {
   if (selectedContractId.value) {
-    events.value = await eventsStore.fetchEventsByContract(selectedContractId.value);
-  } else {
-    events.value = [];
+    await eventsStore.fetchEventsByContract(selectedContractId.value);
   }
 }
 

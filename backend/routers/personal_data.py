@@ -1,10 +1,11 @@
 import uuid
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 
 from counterparties.services.personal_data.schemas import (
     PersonalDataCreate, PersonalDataUpdate, PersonalDataResponse
 )
 from counterparties.services.deps import PersonalDataService
+from utils.pagination import Page, PaginationParams
 
 router = APIRouter(
     prefix="/personal-data",
@@ -26,13 +27,17 @@ async def create_personal_data(
 
 @router.get(
     "/",
-    response_model=list[PersonalDataResponse],
-    summary="Отримати всі персональні дані"
+    response_model=Page[PersonalDataResponse],
+    summary="Отримати всі персональні дані (пагіновано)"
 )
 async def get_all_personal_data(
-    service: PersonalDataService
+    service: PersonalDataService,
+    pagination: PaginationParams = Depends()
 ):
-    return await service.get_all_personal_data()
+    return await service.get_paginated_personal_data(
+        page=pagination.page,
+        size=pagination.size
+    )
 
 
 @router.get(

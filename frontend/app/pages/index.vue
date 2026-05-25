@@ -71,19 +71,19 @@ const loadStats = async () => {
     stats.value = [
       {
         name: 'Active Contracts',
-        value: contractsRes.status === 'fulfilled' ? contractsRes.value.length.toString() : 'Error'
+        value: contractsRes.status === 'fulfilled' ? contractsRes.value.toString() : 'Error'
       },
       {
         name: 'Pending Payments',
-        value: paymentsRes.status === 'fulfilled' ? `$${paymentsRes.value.length}` : 'Error'
+        value: paymentsRes.status === 'fulfilled' ? `$${paymentsRes.value}` : 'Error'
       },
       {
         name: 'New Clients (MTD)',
-        value: clientsRes.status === 'fulfilled' ? clientsRes.value.length.toString() : 'Error'
+        value: clientsRes.status === 'fulfilled' ? clientsRes.value.toString() : 'Error'
       },
       {
         name: 'Open Events',
-        value: eventsRes.status === 'fulfilled' ? eventsRes.value.length.toString() : 'Error'
+        value: eventsRes.status === 'fulfilled' ? eventsRes.value.toString() : 'Error'
       },
     ];
   } catch (error) {

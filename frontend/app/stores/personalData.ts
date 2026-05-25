@@ -1,15 +1,27 @@
 import { defineStore } from 'pinia';
-import type { PersonalData, PersonalDataCreate } from '~/types/api';
+import type { PersonalData, PersonalDataCreate, Page } from '~/types/api';
 
 export const usePersonalDataStore = defineStore('personalData', () => {
   const { fetchApi } = useApi();
   const personalDataList = ref<PersonalData[]>([]);
   const loading = ref(false);
 
-  async function fetchAllPersonalData() {
+  const total = ref(0);
+  const page = ref(1);
+  const size = ref(10);
+  const pages = ref(0);
+
+  async function fetchAllPersonalData(p = 1, s = 10) {
     loading.value = true;
     try {
-      personalDataList.value = await fetchApi<PersonalData[]>('/personal-data/');
+      const response = await fetchApi<Page<PersonalData>>('/personal-data/', {
+        query: { page: p, size: s }
+      });
+      personalDataList.value = response.items;
+      total.value = response.total;
+      page.value = response.page;
+      size.value = response.size;
+      pages.value = response.pages;
     } finally {
       loading.value = false;
     }
@@ -20,7 +32,7 @@ export const usePersonalDataStore = defineStore('personalData', () => {
       method: 'POST',
       body: data,
     });
-    personalDataList.value.push(newData);
+    await fetchAllPersonalData(page.value, size.value);
     return newData;
   }
 
@@ -29,19 +41,22 @@ export const usePersonalDataStore = defineStore('personalData', () => {
       method: 'PATCH',
       body: data,
     });
-    const index = personalDataList.value.findIndex(p => p.id === id);
-    if (index !== -1) personalDataList.value[index] = updatedData;
+    await fetchAllPersonalData(page.value, size.value);
     return updatedData;
   }
 
   async function deletePersonalData(id: string) {
     await fetchApi(`/personal-data/${id}`, { method: 'DELETE' });
-    personalDataList.value = personalDataList.value.filter(p => p.id !== id);
+    await fetchAllPersonalData(page.value, size.value);
   }
 
   return {
     personalDataList,
     loading,
+    total,
+    page,
+    size,
+    pages,
     fetchAllPersonalData,
     createPersonalData,
     updatePersonalData,

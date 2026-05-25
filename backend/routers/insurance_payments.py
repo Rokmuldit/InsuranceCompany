@@ -1,10 +1,11 @@
 import uuid
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 
 from insurance_contracts.services.insurance_payments.schemas import (
     InsurancePaymentCreate, InsurancePaymentResponse
 )
 from insurance_contracts.services.deps import InsurancePaymentsService
+from utils.pagination import Page, PaginationParams
 
 router = APIRouter(
     prefix="/insurance-payments",
@@ -26,13 +27,17 @@ async def register_payment(
 
 @router.get(
     "/",
-    response_model=list[InsurancePaymentResponse],
-    summary="Отримати всі страхові виплати"
+    response_model=Page[InsurancePaymentResponse],
+    summary="Отримати всі страхові виплати (пагіновано)"
 )
 async def get_all_payments(
-    service: InsurancePaymentsService
+    service: InsurancePaymentsService,
+    pagination: PaginationParams = Depends()
 ):
-    return await service.get_all_payments()
+    return await service.get_paginated_payments(
+        page=pagination.page,
+        size=pagination.size
+    )
 
 
 @router.delete(

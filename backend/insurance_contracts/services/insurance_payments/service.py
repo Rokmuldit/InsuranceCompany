@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from insurance_contracts.services.insurance_payments.repo import InsurancePaymentsRepo
 from insurance_contracts.services.insurance_payments.schemas import InsurancePaymentCreate, InsurancePaymentResponse
 from utils.base_service import BaseService
+from utils.pagination import Page
 
 
 class InsurancePaymentsService(BaseService[InsurancePaymentResponse]):
@@ -11,6 +12,14 @@ class InsurancePaymentsService(BaseService[InsurancePaymentResponse]):
 
     def __init__(self, session: AsyncSession):
         super().__init__(InsurancePaymentsRepo(session))
+
+    async def get_paginated_payments(self, page: int, size: int) -> Page[InsurancePaymentResponse]:
+        return await self.get_paginated(
+            page=page,
+            size=size,
+            base_query=self.repo._BASE_QUERY,
+            order_by="IP.ID"
+        )
 
     async def register_payment(self, payment_in: InsurancePaymentCreate) -> InsurancePaymentResponse:
         try:
@@ -20,7 +29,7 @@ class InsurancePaymentsService(BaseService[InsurancePaymentResponse]):
                 payment_date=payment_in.payment_date,
                 payment_amount=payment_in.payment_amount
             )
-        except Exception:
+        except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Не вдалося зареєструвати виплату. Перевірте правильність ID договору та події."

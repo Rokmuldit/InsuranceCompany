@@ -1,10 +1,11 @@
 import uuid
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 
 from counterparties.services.agent.schemas import (
    AgentCreate, AgentSearch, AgentResponse
 )
 from counterparties.services.deps import AgentService
+from utils.pagination import Page, PaginationParams
 
 router = APIRouter(
     prefix="/agents",
@@ -38,13 +39,17 @@ async def search_agents(
 
 @router.get(
     "/",
-    response_model=list[AgentResponse],
-    summary="Отримати всіх агентів"
+    response_model=Page[AgentResponse],
+    summary="Отримати всіх агентів (пагіновано)"
 )
 async def get_all_agents(
-    service: AgentService
+    service: AgentService,
+    pagination: PaginationParams = Depends()
 ):
-    return await service.get_all_agents()
+    return await service.get_paginated_agents(
+        page=pagination.page,
+        size=pagination.size
+    )
 
 
 @router.get(

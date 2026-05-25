@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from insurance_contracts.services.insurance_events.repo import InsuranceEventsRepo
 from insurance_contracts.services.insurance_events.schemas import InsuranceEventCreate, InsuranceEventStatusUpdate, InsuranceEventResponse
 from utils.base_service import BaseService
+from utils.pagination import Page
 
 
 class InsuranceEventsService(BaseService[InsuranceEventResponse]):
@@ -11,6 +12,25 @@ class InsuranceEventsService(BaseService[InsuranceEventResponse]):
 
     def __init__(self, session: AsyncSession):
         super().__init__(InsuranceEventsRepo(session))
+
+    async def get_paginated_events(self, page: int, size: int) -> Page[InsuranceEventResponse]:
+        return await self.get_paginated(
+            page=page,
+            size=size,
+            base_query=self.repo._BASE_QUERY,
+            order_by="IE.ID"
+        )
+
+    async def get_paginated_events_by_contract(
+            self, contract_id: uuid.UUID, page: int, size: int
+    ) -> Page[InsuranceEventResponse]:
+        return await self.get_paginated(
+            page=page,
+            size=size,
+            base_query=self.repo._BASE_QUERY,
+            filters={"IE.ID_InsuranceContract": str(contract_id)},
+            order_by="IE.ID"
+        )
 
     async def register_event(
             self, contract_id: uuid.UUID, event_in: InsuranceEventCreate

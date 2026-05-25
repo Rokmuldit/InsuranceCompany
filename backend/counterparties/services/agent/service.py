@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from counterparties.services.agent.repo import AgentRepo
 from counterparties.services.agent.schemas import AgentCreate, AgentSearch, AgentResponse
 from utils.base_service import BaseService
+from utils.pagination import Page
 
 
 class AgentService(BaseService[AgentResponse]):
@@ -32,6 +33,14 @@ class AgentService(BaseService[AgentResponse]):
     async def get_all_agents(self) -> list[AgentResponse]:
         agents_data = await self.repo.get_all()
         return self._map_list(agents_data)
+
+    async def get_paginated_agents(self, page: int, size: int) -> Page[AgentResponse]:
+        return await self.get_paginated(
+            page=page,
+            size=size,
+            base_query=self.repo._BASE_QUERY,
+            order_by="AG.ID"
+        )
 
     async def get_agent_by_id(self, agent_id: uuid.UUID) -> AgentResponse:
         agent_data = await self._get_or_raise(

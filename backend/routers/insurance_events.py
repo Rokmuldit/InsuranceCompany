@@ -6,11 +6,26 @@ from insurance_contracts.services.insurance_events.schemas import (
     InsuranceEventCreate, InsuranceEventStatusUpdate, InsuranceEventResponse
 )
 from insurance_contracts.services.deps import InsuranceEventsService
+from utils.pagination import Page, PaginationParams
 
 router = APIRouter(
     prefix="/insurance-events",
     tags=["Insurance Events"],
 )
+
+@router.get(
+    "/",
+    response_model=Page[InsuranceEventResponse],
+    summary="Отримати всі страхові події (пагіновано)"
+)
+async def get_all_events(
+    service: InsuranceEventsService,
+    pagination: PaginationParams = Depends()
+):
+    return await service.get_paginated_events(
+        page=pagination.page,
+        size=pagination.size
+    )
 
 @router.post(
     "/contract/{contract_id}",
@@ -28,14 +43,19 @@ async def register_event(
 
 @router.get(
     "/contract/{contract_id}",
-    response_model=list[InsuranceEventResponse],
-    summary="Отримати всі страхові події за ID договору"
+    response_model=Page[InsuranceEventResponse],
+    summary="Отримати всі страхові події за ID договору (пагіновано)"
 )
 async def get_events_by_contract(
     contract_id: uuid.UUID,
-    service: InsuranceEventsService
+    service: InsuranceEventsService,
+    pagination: PaginationParams = Depends()
 ):
-    return await service.get_events_by_contract(contract_id)
+    return await service.get_paginated_events_by_contract(
+        contract_id=contract_id,
+        page=pagination.page,
+        size=pagination.size
+    )
 
 
 @router.get(

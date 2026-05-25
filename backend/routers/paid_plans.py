@@ -6,18 +6,18 @@ from insurance_contracts.services.paid_plans.schemas import (
     PaidPlanCreate, PaidPlanUpdate, PaidPlanResponse
 )
 from insurance_contracts.services.deps import PaidPlansService
+from utils.pagination import Page, PaginationParams
 
 router = APIRouter(
     prefix="/paid-plans",
     tags=["Paid Plans"],
 )
 
-
 @router.post(
     "/",
     response_model=PaidPlanResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Створити новий тарифний план"
+    summary="Створити тарифний план"
 )
 async def create_paid_plan(
     plan_in: PaidPlanCreate,
@@ -28,13 +28,17 @@ async def create_paid_plan(
 
 @router.get(
     "/",
-    response_model=list[PaidPlanResponse],
-    summary="Отримати список усіх тарифних планів"
+    response_model=Page[PaidPlanResponse],
+    summary="Отримати всі тарифні плани (пагіновано)"
 )
 async def get_all_paid_plans(
-    service: PaidPlansService
+    service: PaidPlansService,
+    pagination: PaginationParams = Depends()
 ):
-    return await service.get_all_paid_plans()
+    return await service.get_paginated_paid_plans(
+        page=pagination.page,
+        size=pagination.size
+    )
 
 
 @router.get(

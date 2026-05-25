@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from counterparties.services.personal_data.repo import PersonalDataRepo
 from counterparties.services.personal_data.schemas import PersonalDataCreate, PersonalDataUpdate, PersonalDataResponse
 from utils.base_service import BaseService
+from utils.pagination import Page
 
 
 class PersonalDataService(BaseService[PersonalDataResponse]):
@@ -48,6 +49,14 @@ class PersonalDataService(BaseService[PersonalDataResponse]):
     async def get_all_personal_data(self) -> list[PersonalDataResponse]:
         data = await self.repo.get_all()
         return self._map_list(data)
+
+    async def get_paginated_personal_data(self, page: int, size: int) -> Page[PersonalDataResponse]:
+        return await self.get_paginated(
+            page=page,
+            size=size,
+            base_query=self.repo._BASE_QUERY,
+            order_by="PD.ID"
+        )
 
     async def get_personal_data_by_id(self, pd_id: uuid.UUID) -> PersonalDataResponse:
         data = await self._get_or_raise(

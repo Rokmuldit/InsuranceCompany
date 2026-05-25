@@ -1,9 +1,9 @@
-export interface Address {
-  region: string;
-  city: string;
-  street: string;
-  house: string;
-  apartment?: string | null;
+export interface Page<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
 }
 
 export interface PersonalData {
@@ -13,10 +13,20 @@ export interface PersonalData {
   middle_name?: string | null;
   birth_date: string;
   phone_number: string;
-  address?: Address;
+  address_id: string;
+  region: string;
+  city: string;
+  street: string;
+  house: string;
+  apartment?: string | null;
 }
 
-export interface PersonalDataCreate extends Omit<PersonalData, 'id'> {
+export interface PersonalDataCreate {
+  first_name: string;
+  last_name: string;
+  middle_name?: string | null;
+  birth_date: string;
+  phone_number: string;
   region: string;
   city: string;
   street: string;
@@ -42,7 +52,17 @@ export interface PaidPlanCreate {
 export interface Client {
   id: string;
   personal_data_id: string;
-  personal_data?: PersonalData;
+  first_name: string;
+  last_name: string;
+  middle_name?: string | null;
+  birth_date: string;
+  phone_number: string;
+  address_id: string;
+  region: string;
+  city: string;
+  street: string;
+  house: string;
+  apartment?: string | null;
 }
 
 export interface ClientCreate {
@@ -52,7 +72,18 @@ export interface ClientCreate {
 export interface Agent {
   id: string;
   client_id: string;
-  personal_data?: PersonalData;
+  personal_data_id: string;
+  first_name: string;
+  last_name: string;
+  middle_name?: string | null;
+  birth_date: string;
+  phone_number: string;
+  address_id: string;
+  region: string;
+  city: string;
+  street: string;
+  house: string;
+  apartment?: string | null;
 }
 
 export interface AgentCreate {
@@ -60,16 +91,35 @@ export interface AgentCreate {
 }
 
 export interface InsuranceContract {
-  id: string;
-  plan_id: string;
-  client_id: string;
-  agent_id: string;
-  start_date?: string | null;
-  end_date?: string | null;
+  contract_id: string;
+  contract_amount: number;
+  start_date: string;
+  end_date: string;
   is_active: boolean;
-  plan?: PaidPlan;
-  client?: Client;
-  agent?: Agent;
+
+  client_id: string;
+  client_first_name: string;
+  client_last_name: string;
+  client_middle_name?: string | null;
+  client_birth_date: string;
+  client_phone_number: string;
+  client_region: string;
+  client_city: string;
+  client_street: string;
+  client_house: string;
+  client_apartment?: string | null;
+
+  agent_id: string;
+  agent_first_name: string;
+  agent_last_name: string;
+  agent_middle_name?: string | null;
+  agent_birth_date: string;
+  agent_phone_number: string;
+  agent_region: string;
+  agent_city: string;
+  agent_street: string;
+  agent_house: string;
+  agent_apartment?: string | null;
 }
 
 export interface InsuranceContractCreate {

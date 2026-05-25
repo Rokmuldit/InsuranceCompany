@@ -6,6 +6,7 @@ from insurance_contracts.services.insurance_contracts.schemas import (
     InsuranceContractCreate, InsuranceContractResponse
 )
 from utils.base_service import BaseService
+from utils.pagination import Page
 
 
 class InsuranceContractsService(BaseService[InsuranceContractResponse]):
@@ -30,6 +31,14 @@ class InsuranceContractsService(BaseService[InsuranceContractResponse]):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         return self.response_schema(**new_contract)
+
+    async def get_paginated_insurance_contracts(self, page: int, size: int) -> Page[InsuranceContractResponse]:
+        return await self.get_paginated(
+            page=page,
+            size=size,
+            base_query=self.repo._BASE_GET_QUERY,
+            order_by="IC.ID"
+        )
 
     async def get_insurance_contract_by_id(self, contract_id: uuid.UUID) -> InsuranceContractResponse:
         contract_data = await self._get_or_raise(

@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from counterparties.services.client.repo import ClientRepo
 from counterparties.services.client.schemas import ClientCreate, ClientSearch, ClientResponse
 from utils.base_service import BaseService
+from utils.pagination import Page
 
 
 class ClientService(BaseService[ClientResponse]):
@@ -31,6 +32,14 @@ class ClientService(BaseService[ClientResponse]):
     async def get_all_clients(self) -> list[ClientResponse]:
         clients_data = await self.repo.get_all()
         return self._map_list(clients_data)
+
+    async def get_paginated_clients(self, page: int, size: int) -> Page[ClientResponse]:
+        return await self.get_paginated(
+            page=page,
+            size=size,
+            base_query=self.repo._BASE_QUERY,
+            order_by="C.ID"
+        )
 
     async def get_client_by_id(self, client_id: uuid.UUID) -> ClientResponse:
         client_data = await self._get_or_raise(

@@ -5,6 +5,7 @@ from insurance_contracts.services.deps import InsuranceContractsService
 from insurance_contracts.services.insurance_contracts.schemas import (
     InsuranceContractCreate, InsuranceContractResponse
 )
+from utils.pagination import Page, PaginationParams
 
 router = APIRouter(
     prefix="/insurance-contracts",
@@ -27,13 +28,17 @@ async def create_insurance_contract(
 
 @router.get(
     "/",
-    response_model=list[InsuranceContractResponse],
-    summary="Отримати всі договори страхування"
+    response_model=Page[InsuranceContractResponse],
+    summary="Отримати всі договори страхування (пагіновано)"
 )
 async def get_all_insurance_contracts(
-    service: InsuranceContractsService
+    service: InsuranceContractsService,
+    pagination: PaginationParams = Depends()
 ):
-    return await service.get_all_insurance_contracts()
+    return await service.get_paginated_insurance_contracts(
+        page=pagination.page,
+        size=pagination.size
+    )
 
 
 @router.get(

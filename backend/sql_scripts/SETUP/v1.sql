@@ -31,7 +31,7 @@ BEGIN
         BirthDate DATE NOT NULL,
         PhoneNumber NVARCHAR(20) UNIQUE NOT NULL,
         ID_Address UNIQUEIDENTIFIER NOT NULL,
-        CONSTRAINT FK_PersonalData_Address FOREIGN KEY (ID_Address) REFERENCES Address(ID)
+        CONSTRAINT FK_PersonalData_Address FOREIGN KEY (ID_Address) REFERENCES Address(ID) ON DELETE CASCADE
     );
 END;
 
@@ -40,7 +40,7 @@ BEGIN
     CREATE TABLE Client(
         ID UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         ID_PersonalData UNIQUEIDENTIFIER NOT NULL,
-        CONSTRAINT FK_Client_PersonalData FOREIGN KEY (ID_PersonalData) REFERENCES PersonalData(ID)
+        CONSTRAINT FK_Client_PersonalData FOREIGN KEY (ID_PersonalData) REFERENCES PersonalData(ID) ON DELETE CASCADE
     );
 END;
 
@@ -49,7 +49,7 @@ BEGIN
     CREATE TABLE Agent(
         ID UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         ID_Client UNIQUEIDENTIFIER NOT NULL,
-        CONSTRAINT FK_Agent_Client FOREIGN KEY (ID_Client) REFERENCES Client(ID)
+        CONSTRAINT FK_Agent_Client FOREIGN KEY (ID_Client) REFERENCES Client(ID) ON DELETE CASCADE
     );
 END;
 
@@ -63,7 +63,7 @@ BEGIN
         IsActive BIT DEFAULT 1,
         ID_Client UNIQUEIDENTIFIER NOT NULL,
         ID_Agent UNIQUEIDENTIFIER NOT NULL,
-        CONSTRAINT FK_InsuranceContract_Client FOREIGN KEY (ID_Client) REFERENCES Client(ID),
+        CONSTRAINT FK_InsuranceContract_Client FOREIGN KEY (ID_Client) REFERENCES Client(ID) ON DELETE CASCADE,
         CONSTRAINT FK_InsuranceContract_Agent FOREIGN KEY (ID_Agent) REFERENCES Agent(ID)
     );
 END;
@@ -76,7 +76,7 @@ BEGIN
         IsInsuranceCase BIT NOT NULL DEFAULT 0,
         Description NVARCHAR(MAX) NULL,
         ID_InsuranceContract UNIQUEIDENTIFIER NOT NULL,
-        CONSTRAINT FK_InsuranceEvents_InsuranceContract FOREIGN KEY (ID_InsuranceContract) REFERENCES InsuranceContract(ID)
+        CONSTRAINT FK_InsuranceEvents_InsuranceContract FOREIGN KEY (ID_InsuranceContract) REFERENCES InsuranceContract(ID) ON DELETE CASCADE
     );
 END;
 
@@ -89,6 +89,6 @@ BEGIN
         ID_InsuranceContract UNIQUEIDENTIFIER NOT NULL,
         ID_InsuranceEvents UNIQUEIDENTIFIER NOT NULL,
         CONSTRAINT FK_InsurancePayment_InsuranceContract FOREIGN KEY (ID_InsuranceContract) REFERENCES InsuranceContract(ID),
-        CONSTRAINT FK_InsurancePayment_InsuranceEvents FOREIGN KEY (ID_InsuranceEvents) REFERENCES InsuranceEvents(ID)
+        CONSTRAINT FK_InsurancePayment_InsuranceEvents FOREIGN KEY (ID_InsuranceEvents) REFERENCES InsuranceEvents(ID) ON DELETE CASCADE
     );
 END;

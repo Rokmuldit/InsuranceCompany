@@ -7,6 +7,7 @@ from insurance_contracts.services.paid_plans.schemas import (
     PaidPlanCreate, PaidPlanUpdate, PaidPlanResponse
 )
 from utils.base_service import BaseService
+from utils.pagination import Page
 
 
 class PaidPlansService(BaseService[PaidPlanResponse]):
@@ -14,6 +15,14 @@ class PaidPlansService(BaseService[PaidPlanResponse]):
 
     def __init__(self, session: AsyncSession):
         super().__init__(PaidPlansRepo(session))
+
+    async def get_paginated_paid_plans(self, page: int, size: int) -> Page[PaidPlanResponse]:
+        return await self.get_paginated(
+            page=page,
+            size=size,
+            base_query=self.repo._BASE_QUERY,
+            order_by="ID"
+        )
 
     async def create_paid_plan(self, plan_in: PaidPlanCreate) -> PaidPlanResponse:
         new_id = await self.repo.create_paid_plan(

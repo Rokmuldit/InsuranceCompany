@@ -35,8 +35,17 @@ class InsurancePaymentsRepo(BaseRepo):
         })
         new_id = result.scalar()
 
-        update_contract_query = "UPDATE InsuranceContract SET IsActive = 0 WHERE ID = :contract_id"
-        await self.session.execute(text(update_contract_query), {"contract_id": str(contract_id)})
+        get_sum_payments_query = "SELECT SUM(PaymentAmount) FROM InsurancePayment WHERE ID_InsuranceContract = :contract_id"
+        result = await self.session.execute(text(get_sum_payments_query), {"contract_id": str(contract_id)})
+        contract_sum = float(result.scalar()) or 0.0
+
+        get_contract_payment_query = "SELECT ContractAmount FROM InsuranceContract WHERE ID = :contract_id"
+        result = await self.session.execute(text(get_contract_payment_query), {"contract_id": str(contract_id)})
+        contract_payment = float(result.scalar()) or 0.0
+
+        if contract_sum + float(payment_amount) >= contract_payment:
+            update_contract_query = "UPDATE InsuranceContract SET IsActive = 0 WHERE ID = :contract_id"
+            await self.session.execute(text(update_contract_query), {"contract_id": str(contract_id)})
 
         await self.session.commit()
         return new_id

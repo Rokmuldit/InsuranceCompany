@@ -1,10 +1,11 @@
 import uuid
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 
 from counterparties.services.client.schemas import (
     ClientCreate, ClientSearch, ClientResponse
 )
 from counterparties.services.deps import ClientService
+from utils.pagination import Page, PaginationParams
 
 router = APIRouter(
     prefix="/clients",
@@ -38,13 +39,17 @@ async def search_clients(
 
 @router.get(
     "/",
-    response_model=list[ClientResponse],
-    summary="Отримати всіх клієнтів"
+    response_model=Page[ClientResponse],
+    summary="Отримати всіх клієнтів (пагіновано)"
 )
 async def get_all_clients(
-    service: ClientService
+    service: ClientService,
+    pagination: PaginationParams = Depends()
 ):
-    return await service.get_all_clients()
+    return await service.get_paginated_clients(
+        page=pagination.page,
+        size=pagination.size
+    )
 
 
 @router.get(
@@ -76,4 +81,4 @@ async def delete_client(
 async def get_sum_all_clients(
     service: ClientService
 ):
-    return await service.get_sum_all_clients()
+    return await service.get_sum_of_all_clients()

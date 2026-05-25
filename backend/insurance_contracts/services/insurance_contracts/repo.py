@@ -68,7 +68,7 @@ class InsuranceContractsRepo(BaseRepo):
             ContractAmount=plan_data["payment_amount"],
             StartDate=start_date,
             EndDate=end_date,
-            IsActive=1,
+            IsActive=0,
             ID_Client=str(client_id),
             ID_Agent=str(agent_id)
         )

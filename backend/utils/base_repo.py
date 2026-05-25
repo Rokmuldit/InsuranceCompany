@@ -27,8 +27,6 @@ class BaseRepo:
         await self.session.commit()
         return result.scalar()
 
-    # --- ГЕНЕРАТОРЫ SQL ЗАПРОСОВ (БЕЗ COMMIT) ---
-
     def _build_insert_query(self, table: str, kwargs: dict) -> tuple[str, dict]:
         columns = ", ".join(kwargs.keys())
         placeholders = ", ".join(f":{k}" for k in kwargs.keys())
@@ -45,8 +43,6 @@ class BaseRepo:
         query = f"DELETE FROM {table} WHERE ID = :_id"
         return query, {"_id": str(record_id)}
 
-    # --- БАЗОВЫЙ CRUD С АВТОКОММИТАМИ ---
-
     async def create_record(self, **kwargs) -> Any:
         if not self.table_name: raise ValueError("table_name is not defined")
         query, params = self._build_insert_query(self.table_name, kwargs)
@@ -61,8 +57,6 @@ class BaseRepo:
         if not self.table_name: raise ValueError("table_name is not defined")
         query, params = self._build_delete_query(self.table_name, record_id)
         await self._execute_and_commit(query, params)
-
-    # --- ГЕНЕРАЦИЯ SELECT/WHERE ---
 
     def _build_where(self, filters: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         if not filters: return "", {}
@@ -83,3 +77,28 @@ class BaseRepo:
         where_clause, params = self._build_where(filters or {})
         query = base_query + where_clause
         return await self._fetch_one(query, params)
+
+    async def count_all(self, base_query: str, filters: dict[str, Any] | None = None) -> int:
+        where_clause, params = self._build_where(filters or {})
+        count_query = f"SELECT COUNT(*) FROM ({base_query} {where_clause}) AS count_query"
+        result = await self.session.execute(text(count_query), params)
+        return int(result.scalar())
+
+    async def find_paginated(
+        self,
+        base_query: str,
+        page: int,
+        size: int,
+        filters: dict[str, Any] | None = None,
+        order_by: str = "ID"
+    ) -> list[dict]:
+        where_clause, params = self._build_where(filters or {})
+        offset = (page - 1) * size
+
+        # MS SQL pagination
+        query = (
+            f"{base_query} {where_clause} "
+            f"ORDER BY {order_by} "
+            f"OFFSET {offset} ROWS FETCH NEXT {size} ROWS ONLY"
+        )
+        return await self._fetch_all(query, params)

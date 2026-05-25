@@ -7,7 +7,16 @@
       </AppButton>
     </div>
 
-    <AppTable :columns="columns" :items="clientsStore.clients">
+    <AppTable
+      :columns="columns"
+      :items="clientsStore.clients"
+      :total="clientsStore.total"
+      :page="clientsStore.page"
+      :pages="clientsStore.pages"
+      :size="clientsStore.size"
+      @update:page="clientsStore.fetchClients($event, clientsStore.size)"
+      @update:size="clientsStore.fetchClients(1, $event)"
+    >
       <template #cell(name)="{ item }">
         {{ item.first_name }} {{ item.last_name }}
       </template>

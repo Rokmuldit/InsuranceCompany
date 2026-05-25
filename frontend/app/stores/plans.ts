@@ -1,15 +1,27 @@
 import { defineStore } from 'pinia';
-import type { PaidPlan, PaidPlanCreate } from '~/types/api';
+import type { PaidPlan, PaidPlanCreate, Page } from '~/types/api';
 
 export const usePaidPlansStore = defineStore('paidPlans', () => {
   const { fetchApi } = useApi();
   const plans = ref<PaidPlan[]>([]);
   const loading = ref(false);
 
-  async function fetchPlans() {
+  const total = ref(0);
+  const page = ref(1);
+  const size = ref(10);
+  const pages = ref(0);
+
+  async function fetchPlans(p = 1, s = 10) {
     loading.value = true;
     try {
-      plans.value = await fetchApi<PaidPlan[]>('/paid-plans/');
+      const response = await fetchApi<Page<PaidPlan>>('/paid-plans/', {
+        query: { page: p, size: s }
+      });
+      plans.value = response.items;
+      total.value = response.total;
+      page.value = response.page;
+      size.value = response.size;
+      pages.value = response.pages;
     } finally {
       loading.value = false;
     }
@@ -20,7 +32,7 @@ export const usePaidPlansStore = defineStore('paidPlans', () => {
       method: 'POST',
       body: data,
     });
-    plans.value.push(newPlan);
+    await fetchPlans(page.value, size.value);
     return newPlan;
   }
 
@@ -29,19 +41,22 @@ export const usePaidPlansStore = defineStore('paidPlans', () => {
       method: 'PUT',
       body: data,
     });
-    const index = plans.value.findIndex(p => p.id === id);
-    if (index !== -1) plans.value[index] = updatedPlan;
+    await fetchPlans(page.value, size.value);
     return updatedPlan;
   }
 
   async function deletePlan(id: string) {
     await fetchApi(`/paid-plans/${id}`, { method: 'DELETE' });
-    plans.value = plans.value.filter(p => p.id !== id);
+    await fetchPlans(page.value, size.value);
   }
 
   return {
     plans,
     loading,
+    total,
+    page,
+    size,
+    pages,
     fetchPlans,
     createPlan,
     updatePlan,

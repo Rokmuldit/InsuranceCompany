@@ -1,5 +1,7 @@
 import uuid
 from datetime import date
+
+from sqlalchemy.sql.expression import text
 from utils.base_repo import BaseRepo
 
 
@@ -39,5 +41,5 @@ class InsuranceEventsRepo(BaseRepo):
 
     async def get_sum_all_open_events(self) -> int:
         query = f"SELECT COUNT(*) FROM {self.table_name} WHERE IsInsuranceCase = 0"
-        result = await self.session.execute(query)
+        result = await self.session.execute(text(query))
         return result.scalar()

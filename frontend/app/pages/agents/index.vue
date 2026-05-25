@@ -7,7 +7,16 @@
       </AppButton>
     </div>
 
-    <AppTable :columns="columns" :items="agentsStore.agents">
+    <AppTable
+      :columns="columns"
+      :items="agentsStore.agents"
+      :total="agentsStore.total"
+      :page="agentsStore.page"
+      :pages="agentsStore.pages"
+      :size="agentsStore.size"
+      @update:page="agentsStore.fetchAgents($event, agentsStore.size)"
+      @update:size="agentsStore.fetchAgents(1, $event)"
+    >
       <template #cell(name)="{ item }">
         {{ item.first_name }} {{ item.last_name }}
       </template>
@@ -84,7 +93,7 @@ async function saveAgent() {
 }
 
 async function confirmDelete(agent: Agent) {
-  if (confirm(`Are you sure you want to remove agent status for "${agent.personal_data?.first_name}"?`)) {
+  if (confirm(`Are you sure you want to remove agent status for "${agent.first_name}"?`)) {
     await agentsStore.deleteAgent(agent.id);
   }
 }
